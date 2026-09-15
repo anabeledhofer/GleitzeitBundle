@@ -167,9 +167,11 @@
                 Übertrag GZ: {{ _self.std(ergebnis.uebertragStartSekunden) }} h,
                 Reise: {{ _self.std(ergebnis.uebertragStartReiseSekunden) }} h ;
                 Urlaub: {{ ergebnis.urlaubTage }} Tage;
-                <strong{% if urlaubRest <0 %}class = "text-red"{% endif %} >Resturlaub:{{urlaubRest}} Tage</strong> 
+                <strong{% if urlaubRest <0 %}class = "text-red"{% endif %} >Resturlaub: {{urlaubRest}} Tage</strong> 
                 Krankenstand: {{ ergebnis.krankenstandTage }} Tage ;
-                Sonderurlaub: {{ ergebnis.sonderurlaubTage }} Tage
+                Sonderurlaub: {{ ergebnis.sonderurlaubTage }} Tage ;
+                Reisetage: {{ reiseTage }} ; 
+                Homeoffice-Tage: {{ hoTage }} ;
                 {% if ergebnis.ueberschreitung %}
                     <span class="badge bg-red-lt">Achtung: 12h-Überschreitung im Monat</span>
                 {% endif %}

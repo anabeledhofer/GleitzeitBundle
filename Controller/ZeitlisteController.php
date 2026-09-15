@@ -29,7 +29,9 @@ final class ZeitlisteController extends AbstractController
         AbschlussService $abschlussService,
         MonatsAbschlussRepository $abschluesse,
         UserRepository $userRepository,
-        UrlaubsRechner $urlaubsRechner
+        UrlaubsRechner $urlaubsRechner,
+        DiaetenListe $diaetenListe
+
     ): Response {
         $user = $this->getUser();
 
@@ -56,7 +58,9 @@ final class ZeitlisteController extends AbstractController
         // Startüberträge kommen automatisch aus dem Vormonats-Abschluss
         $ergebnis = $abschlussService->berechneMitVormonat($anzeigeUser, $jahr, $monat);
 
-        
+        // HO-/reisetage: kommen aus der diätenliste (dort schon gezählt,
+        // um doppelte zähl-logik zu vermeiden)
+        $diaeten = $diaetenListe->berechne($anzeigeUser, $jahr, $monat);
 
         // null = offen, 1 = abgeschlossen
         $abschluss = $abschluesse->findAbschluss($anzeigeUser, $jahr, $monat);
@@ -100,7 +104,9 @@ final class ZeitlisteController extends AbstractController
             'monat' => $monat,
             'vorher' => $aktuell->modify('-1 month'),
             'nachher' => $aktuell->modify('+1 month'),
-            'urlaubRest' => $urlaubRest
+            'urlaubRest' => $urlaubRest,
+            'hoTage' => $diaeten->hoTage,
+            'reiseTage' => $diaeten->reiseTage,
             
         ]);
     }

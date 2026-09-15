@@ -26,4 +26,6 @@ final class MonatGesamt
 
     //rue sobald ein Tag über 12 h => Abschluss-Sperre (TODO)*/
     public bool $ueberschreitung = false;
+
+
 }
