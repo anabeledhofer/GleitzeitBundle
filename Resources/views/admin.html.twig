@@ -1,0 +1,88 @@
+{% extends 'base.html.twig' %}
+
+{% block main %}
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Gleitzeit-Verwaltung</h3></div>
+        <div class="card-body">
+            <p class="text-muted">
+            </p>
+            <table class="table table-striped align-middle">
+                <thead>
+                <tr>
+                    <th>Benutzer</th>
+                    <th>Eintritt</th>
+                    <th>Start-Ü GZ</th>
+                    <th>Start-Ü Reise</th>
+                    <th>Start-Urlaub</th>
+
+                    <th>Std./Tag</th>
+                    <th>Urlaubsanspruch/J</th>
+
+                    <th>Letzter Abschluss</th>
+                    <th>GZ-Konto</th>
+                    <th>Reise-Konto</th>
+                    <th>Urlaub Rest</th>
+
+
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for zeile in zeilen %}
+                    <tr>
+                        {# jede zeile ist ihr eigenes formular #}
+                        <form method="post" action="{{ path('gleitzeit_admin_speichern') }}">
+                        <td>
+                            {# name verlinkt auf die zeitliste des users #}
+                            <a href="{{ path('gleitzeit_zeitliste', {user: zeile.user.id}) }}">{{ zeile.user.displayName }}</a>
+                        </td>
+                        <td>
+                            {# eintrittsdatum - leer lassen = unverändert #}
+                            <input type="date" name="eintritt" class="form-control form-control-sm"
+                                   value="{{ zeile.eintritt ? zeile.eintritt|date('Y-m-d') : '' }}">
+                        </td>
+                        <td style="max-width: 6rem;">
+                            <input type="number" step="0.5" name="startGz" class="form-control form-control-sm"
+                                   value="{{ zeile.startAbschluss ? (zeile.startAbschluss.uebertragSekunden / 3600)|round(2) : 0 }}">
+                        </td>
+                        <td style="max-width: 6rem;">
+                            <input type="number" step="0.5" name="startReise" class="form-control form-control-sm"
+                                   value="{{ zeile.startAbschluss ? (zeile.startAbschluss.uebertragReiseSekunden / 3600)|round(2) : 0 }}">
+                        </td>
+                        <td style="max-width: 6rem;">
+                            <input type="number" step="0.5" name="startguthaben" class="form-control form-control-sm"
+                                   value="{{ zeile.startguthaben }}">
+                        </td>
+                        <td style="max-width: 8rem;">
+                            <input type="number" step="0.1" min="0" max="12" name="stundenProTag"
+                                   value="{{ zeile.stundenProTag }}" class="form-control form-control-sm">
+                        </td>
+                        <td style="max-width: 8rem;">
+                            <input type="number" step="0.5" min="0" max="60" name="anspruch"
+                                   value="{{ zeile.anspruch }}" class="form-control form-control-sm">
+                        </td>
+                        <td>
+                            {% if zeile.abschluss %}
+                                {{ '%02d'|format(zeile.abschluss.monat) }}/{{ zeile.abschluss.jahr }}
+                            {% else %}
+                                <span class="text-muted">-/span>
+                            {% endif %}
+                        </td>
+                        <td>{{ zeile.abschluss ? (zeile.abschluss.uebertragSekunden / 3600)|round(2) : '-' }}</td>
+                        <td>{{ zeile.abschluss ? (zeile.abschluss.uebertragReiseSekunden / 3600)|round(2) : '-' }}</td>
+                        <td>{{ zeile.urlaubRest }}</td>
+
+                        <td>
+                            <input type="hidden" name="user" value="{{ zeile.user.id }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('gleitzeit.admin') }}">
+                            <button type="submit" class="btn btn-sm btn-primary">Speichern</button>
+                        </td>
+
+                        </form>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

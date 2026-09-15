@@ -1,0 +1,119 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        @media print {
+            /* alles ausblenden, was nicht aufn druck gehört */
+            .d-print-none,
+            form,
+            nav,
+            .navbar,
+            aside,
+            #sidebar-menu,
+            .page-header .btn {
+                display: none !important;
+            }
+            .card {
+                border: 0 !important;
+                box-shadow: none !important;
+            }
+            table {
+                font-size: 9pt;
+                width: 100%;
+            }
+            table th,
+            table td {
+                padding: 2px 4px !important;
+                color: #000 !important;
+                background: transparent !important;
+            }
+            @page {
+                size: landscape;
+                margin: 10mm;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block main %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Diätenliste {{ '%02d'|format(monat) }}/{{ jahr }} - {{ anzeigeUser.displayName }}</h3>
+            <div class="card-actions">
+                <a class="btn d-print-none" href="{{ path('gleitzeit_diaeten', {jahr: vorher.format('Y'), monat: vorher.format('n'), user: anzeigeUser.id}) }}">&laquo; Vormonat</a>
+                <a class="btn d-print-none" href="{{ path('gleitzeit_diaeten', {jahr: nachher.format('Y'), monat: nachher.format('n'), user: anzeigeUser.id}) }}">Folgemonat &raquo;</a>
+
+                {# monat/jahr direktwahl #}
+                <form method="get" class="d-inline-block ms-2 d-print-none">
+                    <input type="hidden" name="user" value="{{ anzeigeUser.id }}">
+                    <select name="monat" class="form-select d-inline-block w-auto">
+                        {% for m in 1..12 %}
+                            <option value="{{ m }}" {% if m == monat %}selected{% endif %}>
+                                {{ ('2000-' ~ '%02d'|format(m) ~ '-01')|date('F') }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <select name="jahr" class="form-select d-inline-block w-auto">
+                        {% for j in (('now'|date('Y')) - 5)..(('now'|date('Y')) + 5) %}
+                            <option value="{{ j }}" {% if j == jahr %}selected{% endif %}>{{ j }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn">Anzeigen</button>
+                </form>
+
+                {# user-auswahl #}
+                <form method="get" class="d-inline-block ms-2 d-print-none">
+                    <input type="hidden" name="jahr" value="{{ jahr }}">
+                    <input type="hidden" name="monat" value="{{ monat }}">
+                    <select name="user" class="form-select d-inline-block w-auto" onchange="this.form.submit()">
+                        {% for u in alleUser %}
+                            <option value="{{ u.id }}" {% if u.id == anzeigeUser.id %}selected{% endif %}>{{ u.displayName }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+
+                <button type="button" class="btn d-print-none" onclick="window.print()">Drucken</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Ort</th>
+                    <th>Land</th>
+                    <th>Art</th>
+                    <th>Stunden</th>
+                    <th>Satz (€)</th>
+                    <th>Diäten (€)</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for zeile in ergebnis.zeilen %}
+                    <tr>
+                        <td>{{ zeile.datum.format('d.m.Y') }}</td>
+                        <td>{{ zeile.ort }}</td>
+                        <td>{{ zeile.land }}</td>
+                        <td>{{ zeile.art }}</td>
+                        <td>{{ zeile.stunden|round(0, 'ceil') }} ({{ zeile.stunden|round(2) }})</td>
+                        <td>{{ zeile.satz|round(2) }}</td>
+                        <td>{{ zeile.betrag|round(2) }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7" class="text-muted">Keine Reisetage in diesem Monat.</td></tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                <tr>
+                    <th colspan="6" class="text-end">Summe</th>
+                    <th>{{ ergebnis.summe|round(2) }} €</th>
+                </tr>
+                </tfoot>
+            </table>
+            <p class="text-muted">
+                Reisetage: {{ ergebnis.reiseTage }} ; Homeoffice-Tage: {{ ergebnis.hoTage }}
+            </p>
+        </div>
+    </div>
+{% endblock %}

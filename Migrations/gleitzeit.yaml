@@ -1,0 +1,6 @@
+# Doctrine-Migrations-Konfiguration für GZ Bundle
+# sagt kimai wo unser file liegt das sagt wie man die DB anlegt
+table_storage:
+    table_name: 'gleitzeit_migrations'
+migrations_paths:
+    'KimaiPlugin\GleitzeitBundle\Migrations': 'var/plugins/GleitzeitBundle/Migrations'

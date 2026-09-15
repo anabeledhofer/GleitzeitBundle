@@ -1,0 +1,9 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true #jede klasse implementiert den eventsubscriberInterface
+        public: false
+
+    KimaiPlugin\GleitzeitBundle\:
+        resource: '../../*'
+        exclude: '../../{DependencyInjection,Resources}'

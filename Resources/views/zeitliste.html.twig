@@ -1,0 +1,239 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        @media print {
+            /* alles ausblenden, was nicht aufn druck gehört (menü, formulare, buttons, navigation..) */
+            .d-print-none,
+            form,
+            nav,
+            .navbar,
+            aside,
+            #sidebar-menu,
+            .page-header .btn {
+                display: none !important;
+            }
+
+            /* volle breite nutzen, keine schatten/rahmen */
+            .card {
+                border: 0 !important;
+                box-shadow: none !important;
+            }
+
+            /* tabelle kompakt und lesbar in schwarz-weiß */
+            table {
+                font-size: 9pt;
+                width: 100%;
+            }
+            table th,
+            table td {
+                padding: 2px 4px !important;
+                color: #000 !important;
+                background: transparent !important;
+            }
+
+            /* badges (feiertag, urlaub...) als einfacher text drucken */
+            .badge {
+                border: 1px solid #999;
+                color: #000 !important;
+                background: transparent !important;
+            }
+
+            /* querformat empfehlen - die tabelle ist breit */
+            @page {
+                size: landscape;
+                margin: 10mm;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block main %}
+    {#  Hilfsmakro: Sekunden -> H:MM #}
+    {% macro hms(sekunden) %}
+        {%- if sekunden > 0 -%}
+            {{- (sekunden // 3600) ~ ':' ~ '%02d'|format((sekunden % 3600) // 60) -}}
+        {%- else -%}
+            -
+        {%- endif -%}
+    {% endmacro %}
+
+    {% macro std(sekunden) %}{{ (sekunden / 3600)|round(2) }}{% endmacro %}
+
+    
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Zeitliste {{ '%02d'|format(monat) }}/{{ jahr }}</h3>
+            <div class="card-actions">
+                <a class="btn" href="{{ path('gleitzeit_zeitliste', {jahr: vorher.format('Y'), monat: vorher.format('n'), user: anzeigeUser.id}) }}">&laquo; Vormonat</a>
+                <a class="btn" href="{{ path('gleitzeit_zeitliste', {jahr: nachher.format('Y'), monat: nachher.format('n'), user: anzeigeUser.id})}}">Folgemonat &raquo;</a>
+            </div>
+            {# monat/jahr direktwahl - GET-formular, springt beim absenden #}
+            <form method="get" class="d-inline-block ms-2">
+                {% if alleUser|length > 0 %}
+                    {# gewählten user beim springen beibehalten #}
+                    <input type="hidden" name="user" value="{{ anzeigeUser.id }}">
+                {% endif %}
+
+                <select name="monat" class="form-select d-inline-block w-auto">
+                    {% for m in 1..12 %}
+                        <option value="{{ m }}" {% if m == monat %}selected{% endif %}>
+                            {{ ('2000-' ~ '%02d'|format(m) ~ '-01')|date('F') }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <select name="jahr" class="form-select d-inline-block w-auto">
+                    {# 5 jahre zurück bis 5 jahre voraus wählbar #}
+                    {% for j in (('now'|date('Y')) - 5)..(('now'|date('Y')) + 5) %}
+                        <option value="{{ j }}" {% if j == jahr %}selected{% endif %}>{{ j }}</option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="btn">Anzeigen</button>
+            </form>
+
+            {# user-auswahl für admins - GET-formular, wechselt die ansicht #}
+            <form method="get" class="d-inline-block ms-2">
+                <input type="hidden" name="jahr" value="{{ jahr }}">
+                <input type="hidden" name="monat" value="{{ monat }}">
+                <select name="user" class="form-select d-inline-block w-auto" onchange="this.form.submit()">
+                    {% for u in alleUser %}
+                        <option value="{{ u.id }}" {% if u.id == anzeigeUser.id %}selected{% endif %}>{{ u.displayName }}</option>
+                    {% endfor %}
+                </select>
+            </form> 
+            <button type="button" class="btn d-print-none" onclick="window.print()">
+                    Drucken
+            </button>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Tag</th>
+                    <th>Beginn</th>
+                    <th>Ende</th>
+                    <th>Pause</th>
+                    <th>Arbeit Ist</th>
+                    <th>Arbeit Soll</th>
+                    <th>Reise Ist</th>
+                    <th>Summe</th>
+                    <th>Gleitzeitkonto</th>
+                    <th>Reise-Konto</th>
+                    <th>!</th>
+                    <th>Info</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for zeile in zeilen %}
+                    <tr>
+                        <td>{{ zeile.datum.format('d.m.Y') }}</td>
+                        <td>{{ zeile.datum.format('D') }}</td>
+                        <td>{{ zeile.beginn ? zeile.beginn.format('H:i') : '-' }}</td>
+                        <td>{{ zeile.ende ? zeile.ende.format('H:i') : '-' }}</td>
+                        <td>{{ zeile.beginn ? _self.hms(zeile.pauseSekunden) : '-' }}</td>
+                        <td>{{ _self.hms(zeile.istSekunden) }}</td>
+                        <td>{{ _self.hms(zeile.sollSekunden) }}</td>
+                        <td>{{ _self.hms(zeile.reiseSekunden) }}</td>
+                        {# Tagessaldo GZ / Reise ("Summe") #}
+                        <td>{{ _self.std(zeile.zeitkontoSekunden) }} / {{ _self.std(zeile.reisekontoSekunden) }}</td>
+                        <td>{{ _self.std(zeile.zeitkontoLaufendSekunden) }}</td>
+                        <td>{{ _self.std(zeile.reisekontoLaufendSekunden) }}</td>
+                        <td>{% if zeile.ueberschreitung %}<span class="badge bg-red-lt">X</span>{% endif %}</td>
+                        <td>
+                            {% if zeile.feiertag %}<span class="badge bg-secondary-lt">FT: {{ zeile.feiertag }}</span>{% endif %}
+                            {% if zeile.halberFeiertag %}<span class="badge bg-secondary-lt">½ FT</span>{% endif %}
+                            {% if zeile.kategorie == 'URLAUB' %}<span class="badge bg-green-lt">URLAUB</span>
+                            {% elseif zeile.kategorie == 'KRANKENSTAND' %}<span class="badge bg-red-lt">KRANKENSTAND</span>
+                            {% elseif zeile.kategorie == 'SONDERURLAUB' %}<span class="badge bg-yellow-lt">SONDERURLAUB</span>{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                {# Korrekturzeile: negative Konten gegeneinander ausgeglichen #}
+                <tr class="table-warning">
+                    <td colspan="8"><strong>Korrektur / neue Überträge</strong></td>
+                    <td></td>
+                    <td><strong>{{ _self.std(ergebnis.gleitzeitEndeSekunden) }}</strong></td>
+                    <td><strong>{{ _self.std(ergebnis.reisekontoEndeSekunden) }}</strong></td>
+                    <td></td>
+                </tr>
+                </tbody>
+            </table>
+            <p>
+                Übertrag GZ: {{ _self.std(ergebnis.uebertragStartSekunden) }} h,
+                Reise: {{ _self.std(ergebnis.uebertragStartReiseSekunden) }} h ;
+                Urlaub: {{ ergebnis.urlaubTage }} Tage;
+                <strong{% if urlaubRest <0 %}class = "text-red"{% endif %} >Resturlaub:{{urlaubRest}} Tage</strong> 
+                Krankenstand: {{ ergebnis.krankenstandTage }} Tage ;
+                Sonderurlaub: {{ ergebnis.sonderurlaubTage }} Tage
+                {% if ergebnis.ueberschreitung %}
+                    <span class="badge bg-red-lt">Achtung: 12h-Überschreitung im Monat</span>
+                {% endif %}
+            </p>
+        </div>
+        {# ================= Monatsabschluss ================= #}
+    {% if abschluss %}
+        {# Monat ist zu: gespeicherte Werte anzeigen, nichts mehr änderbar #}
+        <div class="alert alert-success">
+            <strong>Monat abgeschlossen</strong>
+            am {{ abschluss.abgeschlossenAm|date('d.m.Y H:i') }}
+            von {{ abschluss.abgeschlossenVon.displayName }}<br>
+            Übertrag Gleitzeit: {{ (abschluss.uebertragSekunden / 3600)|round(2) }} h ;
+            Übertrag Reise: {{ (abschluss.uebertragReiseSekunden / 3600)|round(2) }} h
+            {% if abschluss.auszahlungSekunden > 0 or abschluss.auszahlungReiseSekunden > 0 %}
+                ; Auszahlung GZ: {{ (abschluss.auszahlungSekunden / 3600)|round(2) }} h ;
+                Auszahlung Reise: {{ (abschluss.auszahlungReiseSekunden / 3600)|round(2) }} h
+            {% endif %}
+            {% if is_granted('ROLE_ADMIN') %}
+                <form method="post" action="{{ path('gleitzeit_wiederoeffnen') }}" class="mt-2"
+                      onsubmit="return confirm('Abschluss {{ '%02d'|format(monat) }}/{{ jahr }} wirklich löschen? Der Monat ist danach wieder offen.');">
+
+                    <input type="hidden" name="_token" value="{{ csrf_token('gleitzeit.wiederoeffnen') }}">
+                    <input type="hidden" name="jahr" value="{{ jahr }}">
+                    <input type="hidden" name="monat" value="{{ monat }}">
+                    <input type="hidden" name="user" value="{{ anzeigeUser.id }}">
+                    
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Monat wieder öffnen</button>
+                </form>
+            {% endif %}
+        </div>
+
+        {% elseif hindernisse|length > 0 %}
+            {# Monat offen, aber (noch) nicht abschließbar: Gründe zeigen #}
+            <div class="alert alert-warning">
+                <strong>Abschluss noch nicht möglich:</strong>
+                {{ hindernisse|join(' ') }}
+            </div>
+        {% else %}
+            {# Monat offen und abschließbar: Formular mit Auszahlungsoption #}
+            <form method="post" action="{{ path('gleitzeit_abschliessen') }}"
+                onsubmit="return confirm('Monat {{ '%02d'|format(monat) }}/{{ jahr }} wirklich abschließen?');">
+                {# CSRF-Token - muss zum Namen im Controller passen #}
+                <input type="hidden" name="_token" value="{{ csrf_token('gleitzeit.abschluss') }}">
+                <input type="hidden" name="jahr" value="{{ jahr }}">
+                <input type="hidden" name="monat" value="{{ monat }}">
+                <input type="hidden" name="user" value="{{ anzeigeUser.id }}">
+
+                
+
+                <div class="row g-2 align-items-end">
+                    <div class="col-auto">
+                        <label class="form-label">Auszahlung Gleitzeit (Std.)</label>
+                        <input type="number" step="0.1" min="0" name="auszahlung" value="0" class="form-control">
+                    </div>
+                    <div class="col-auto">
+                        <label class="form-label">Auszahlung Reise (Std.)</label>
+                        <input type="number" step="0.1" min="0" name="auszahlungReise" value="0" class="form-control">
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">Monat abschließen</button>
+                    </div>
+                </div>
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}

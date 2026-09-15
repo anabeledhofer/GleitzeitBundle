@@ -1,0 +1,20 @@
+{
+    "name": "edworx/gleitzeit-bundle",
+    "description": "Gleitzeit, Monatsabschluss, Feiertage, Diäten für Kimai",
+    "homepage": "https://www.example.com/",
+    "type": "kimai-plugin",
+    "version": "0.1.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "EDAN",
+            "email": "anabe@edworx.net"
+        }
+    ],
+    "extra": {
+        "kimai": {
+            "require": 20000,
+            "name": "GleitzeitBundle"
+        }
+    }
+}
