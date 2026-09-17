@@ -1,5 +1,8 @@
 {% extends 'base.html.twig' %}
 
+{# feste deutsche wochentag-kürzel - format('N') liefert nur eine zahl (1=Mo .. 7=So), die kein browser-übersetzer anfassen kann #}
+{% set wochentage = {1:'Mo', 2:'Di', 3:'Mi', 4:'Do', 5:'Fr', 6:'Sa', 7:'So'} %}
+
 {% block stylesheets %}
     {{ parent() }}
     <style>
@@ -132,7 +135,7 @@
                 {% for zeile in zeilen %}
                     <tr>
                         <td>{{ zeile.datum.format('d.m.Y') }}</td>
-                        <td>{{ zeile.datum.format('D') }}</td>
+                        <td>{{ wochentage[zeile.datum.format('N')] }}</td>
                         <td>{{ zeile.beginn ? zeile.beginn.format('H:i') : '-' }}</td>
                         <td>{{ zeile.ende ? zeile.ende.format('H:i') : '-' }}</td>
                         <td>{{ zeile.beginn ? _self.hms(zeile.pauseSekunden) : '-' }}</td>

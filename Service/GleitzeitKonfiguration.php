@@ -15,9 +15,10 @@ final class GleitzeitKonfiguration
 
     //Tätigkeit IDs
     public const ACTIVITY_REISE = 10;         
-    public const ACTIVITY_URLAUB = 12;        // /de/admin/activity/12/details aber tätigkeitsnummer 013
+    public const ACTIVITY_URLAUB = 12;        
     public const ACTIVITY_KRANKENSTAND = 13;  
     public const ACTIVITY_SONDERURLAUB = 14;  
+    public const ACTIVITY_KRANKENSTAND_STUNDE = 19; 
 
     //Standard-Sollzeit in Stunden pro Tag, falls beim User nichts hinterlegt ist
     public const DEFAULT_SOLL_STUNDEN = 7.7;

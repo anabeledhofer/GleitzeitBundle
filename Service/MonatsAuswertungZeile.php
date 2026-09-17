@@ -29,12 +29,15 @@ final class MonatsAuswertungZeile
 
     //URLAUB / KRANKENSTAND / SONDERURLAUB oder null (normale Arbeit)
     public ?string $kategorie = null;
+     /** krankenstand-stunden (stundenweise, z.B. arztbesuch) - nur für die statistik */
+    public int $krankenstandStundeSekunden = 0;
 
-   //TODO nicht gehandled bis jetzt
     public int $pauseSekunden = 0;
     public int $zeitkontoSekunden = 0;          // Tagessaldo Gleitzeit
     public int $zeitkontoLaufendSekunden = 0;   // laufendes GZ-Konto
     public int $reisekontoSekunden = 0;         // Tagessaldo Reise
     public int $reisekontoLaufendSekunden = 0;  // laufendes Reisekonto
     public bool $ueberschreitung = false;       // 12h-Regel
+    
+
 }
